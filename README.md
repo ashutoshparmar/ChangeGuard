@@ -9,7 +9,7 @@ The current risk score is intentionally rule-based. Azure AI integration remains
 
 ## Application Preview
 
-![ChangeGuard dashboard](docs/images/changeguard-dashboard.png)
+![ChangeGuard dashboard](docs/Images/changeguard-dashboard.png)
 
 ## Completed MVP
 
