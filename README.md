@@ -7,6 +7,10 @@ ChangeGuard is a requirement-to-release control centre for making software chang
 
 The current risk score is intentionally rule-based. Azure AI integration remains a later enhancement and must not be presented as implemented.
 
+## Application Preview
+
+![ChangeGuard dashboard](docs/images/changeguard-dashboard.png)
+
 ## Completed MVP
 
 - Create a validated change request as a draft
