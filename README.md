@@ -1,5 +1,8 @@
 # ChangeGuard AI
 
+[![ChangeGuard CI](https://github.com/ashutoshparmar/ChangeGuard/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ashutoshparmar/ChangeGuard/actions/workflows/ci.yml)
+
+
 ChangeGuard is a requirement-to-release control centre for making software changes clear, traceable, and safe. It replaces informal email-and-meeting hand-offs with a visible workflow, mandatory release evidence, SLA signals, and an immutable audit trail.
 
 The current risk score is intentionally rule-based. Azure AI integration remains a later enhancement and must not be presented as implemented.
