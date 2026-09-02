@@ -1,0 +1,55 @@
+<header class="topbar">
+  <a class="brand" href="/" aria-label="ChangeGuard home">
+    <span>CG</span>
+    <strong>ChangeGuard</strong>
+  </a>
+  <div class="environment">Local workspace</div>
+  @if (healthState$ | async; as state) {
+    <div
+      class="api-status"
+      [class.api-status--healthy]="state.data?.status === 'Healthy'"
+      [class.api-status--error]="state.error"
+      title="Backend API connection"
+    >
+      <i></i>
+      <span data-testid="health-status">
+        @if (state.loading) {
+          Connecting
+        } @else if (state.error) {
+          API offline
+        } @else {
+          {{ state.data?.status }}
+        }
+      </span>
+    </div>
+  }
+</header>
+
+<main class="app-shell">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Requirement-to-release intelligence</p>
+      <h1>Ship change with evidence,<br /><em>not assumptions.</em></h1>
+      <p class="subtitle">
+        One operational workspace for requirements, SLA, QA proof, rollback safety, approvals and a
+        permanent audit trail.
+      </p>
+    </div>
+    <div class="hero__signal" aria-hidden="true">
+      <span>Release signal</span>
+      <strong>Guarded</strong>
+      <i></i>
+    </div>
+  </section>
+
+  <cg-change-request-workspace />
+
+  <footer>
+    <span>ChangeGuard · Job-ready modular monolith</span>
+    @if (healthState$ | async; as state) {
+      @if (state.data; as health) {
+        <span>{{ health.service }} v{{ health.version }}</span>
+      }
+    }
+  </footer>
+</main>

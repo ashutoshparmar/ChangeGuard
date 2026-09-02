@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ChangeGuard.Api/ChangeGuard.Api.csproj" />
+    <Project Path="src/ChangeGuard.Application/ChangeGuard.Application.csproj" />
+    <Project Path="src/ChangeGuard.Domain/ChangeGuard.Domain.csproj" />
+    <Project Path="src/ChangeGuard.Infrastructure/ChangeGuard.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ChangeGuard.UnitTests/ChangeGuard.UnitTests.csproj" />
+  </Folder>
+</Solution>

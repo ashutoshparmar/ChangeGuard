@@ -1,0 +1,376 @@
+<section class="workspace" aria-labelledby="workspace-title">
+  <header class="workspace__header">
+    <div>
+      <p class="kicker">Mission control</p>
+      <h2 id="workspace-title">Change operations</h2>
+      <p>Move every request from a clear requirement to a safe release.</p>
+    </div>
+    <button class="button button--primary" type="button" (click)="toggleCreateForm()">
+      {{ showCreateForm() ? 'Cancel' : '+ New change request' }}
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="notice notice--error" role="alert">
+      <strong>Action needed</strong>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+  @if (successMessage()) {
+    <div class="notice notice--success" role="status">
+      <strong>Mission updated</strong>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  @if (showCreateForm()) {
+    <form class="create-panel" [formGroup]="createForm" (ngSubmit)="createRequest()">
+      <div class="section-heading">
+        <span>01</span>
+        <div>
+          <h3>Open a traceable request</h3>
+          <p>The reference number is the permanent business identifier.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>
+          <span>Reference number</span>
+          <input formControlName="referenceNumber" placeholder="CG-501" />
+          @if (
+            createForm.controls.referenceNumber.touched &&
+            createForm.controls.referenceNumber.invalid
+          ) {
+            <small>Use CG- followed by 3 to 8 digits.</small>
+          }
+        </label>
+        <label>
+          <span>Priority</span>
+          <select formControlName="priority">
+            @for (priority of priorities; track priority) {
+              <option [value]="priority">{{ priority }}</option>
+            }
+          </select>
+        </label>
+        <label class="form-grid__wide">
+          <span>Title</span>
+          <input formControlName="title" placeholder="What business change is required?" />
+          @if (createForm.controls.title.touched && createForm.controls.title.invalid) {
+            <small>Enter a meaningful title of at least 5 characters.</small>
+          }
+        </label>
+        <label class="form-grid__wide">
+          <span>Description</span>
+          <textarea
+            formControlName="description"
+            rows="4"
+            placeholder="Explain the problem, expected outcome and business impact."
+          ></textarea>
+        </label>
+        <label class="form-grid__wide">
+          <span>Requested by</span>
+          <input formControlName="actor" type="email" />
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button class="button button--primary" type="submit" [disabled]="isSaving()">
+          {{ isSaving() ? 'Creating…' : 'Create draft' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (dashboard(); as metrics) {
+    <div class="metrics" aria-label="Change request metrics">
+      <article>
+        <span class="metric-icon metric-icon--blue">Σ</span>
+        <div>
+          <strong>{{ metrics.totalRequests }}</strong
+          ><span>Total requests</span>
+        </div>
+      </article>
+      <article>
+        <span class="metric-icon metric-icon--green">↗</span>
+        <div>
+          <strong>{{ metrics.activeRequests }}</strong
+          ><span>Active missions</span>
+        </div>
+      </article>
+      <article>
+        <span class="metric-icon metric-icon--red">!</span>
+        <div>
+          <strong>{{ metrics.blockedRequests }}</strong
+          ><span>Release blocked</span>
+        </div>
+      </article>
+      <article>
+        <span class="metric-icon metric-icon--amber">◷</span>
+        <div>
+          <strong>{{ metrics.slaBreachedRequests }}</strong
+          ><span>SLA breached</span>
+        </div>
+      </article>
+    </div>
+  }
+
+  <section class="request-panel">
+    <div class="section-heading section-heading--compact">
+      <span>02</span>
+      <div>
+        <h3>Request radar</h3>
+        <p>{{ totalCount() }} matching request{{ totalCount() === 1 ? '' : 's' }}</p>
+      </div>
+    </div>
+
+    <form class="filters" [formGroup]="filterForm" (ngSubmit)="loadOverview()">
+      <label class="search-field">
+        <span class="sr-only">Search requests</span>
+        <input formControlName="search" placeholder="Search reference or title" />
+      </label>
+      <label>
+        <span class="sr-only">Filter by priority</span>
+        <select formControlName="priority">
+          <option value="">All priorities</option>
+          @for (priority of priorities; track priority) {
+            <option [value]="priority">{{ priority }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span class="sr-only">Filter by status</span>
+        <select formControlName="status">
+          <option value="">All statuses</option>
+          @for (status of statuses; track status) {
+            <option [value]="status">{{ statusLabel(status) }}</option>
+          }
+        </select>
+      </label>
+      <button class="button button--dark" type="submit">Apply</button>
+      <button class="button button--ghost" type="button" (click)="clearFilters()">Clear</button>
+    </form>
+
+    @if (isLoading()) {
+      <div class="empty-state">Scanning change requests…</div>
+    } @else if (requests().length === 0) {
+      <div class="empty-state">
+        <strong>No requests found.</strong>
+        <span>Create the first request or clear the filters.</span>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Request</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Readiness</th>
+              <th>SLA</th>
+              <th><span class="sr-only">Open</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (request of requests(); track request.id) {
+              <tr [class.row--selected]="selected()?.id === request.id">
+                <td>
+                  <button
+                    class="request-link"
+                    type="button"
+                    (click)="selectRequest(request.referenceNumber)"
+                  >
+                    <strong>{{ request.referenceNumber }}</strong>
+                    <span>{{ request.title }}</span>
+                  </button>
+                </td>
+                <td>
+                  <span [class]="priorityClass(request.priority)">{{ request.priority }}</span>
+                </td>
+                <td>
+                  <span class="status-pill">{{ statusLabel(request.status) }}</span>
+                </td>
+                <td>
+                  <div class="readiness">
+                    <span>{{ request.readinessScore }}%</span>
+                    <i><b [style.width.%]="request.readinessScore"></b></i>
+                  </div>
+                </td>
+                <td>
+                  <span [class.sla--breached]="request.isSlaBreached">
+                    {{
+                      request.isSlaBreached
+                        ? 'Breached'
+                        : (request.slaDueUtc | date: 'MMM d, HH:mm')
+                    }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    class="icon-button"
+                    type="button"
+                    (click)="selectRequest(request.referenceNumber)"
+                    aria-label="Open request"
+                  >
+                    →
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  @if (selected(); as detail) {
+    <aside class="detail-panel" aria-labelledby="detail-title">
+      <header class="detail-panel__header">
+        <div>
+          <span>{{ detail.referenceNumber }}</span>
+          <h3 id="detail-title">{{ detail.title }}</h3>
+        </div>
+        <button
+          class="icon-button"
+          type="button"
+          (click)="closeDetails()"
+          aria-label="Close details"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="detail-summary">
+        <div class="score-ring" [class.score-ring--blocked]="detail.isBlocked">
+          <strong>{{ detail.readinessScore }}%</strong>
+          <span>ready</span>
+        </div>
+        <div>
+          <span [class]="priorityClass(detail.priority)">{{ detail.priority }}</span>
+          <h4>{{ statusLabel(detail.status) }}</h4>
+          <p [class.sla--breached]="detail.isSlaBreached">
+            @if (detail.isSlaBreached) {
+              SLA breached by {{ -detail.remainingSlaHours | number: '1.0-1' }} hours
+            } @else {
+              SLA: {{ detail.remainingSlaHours | number: '1.0-1' }} hours remaining
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="detail-block">
+        <h4>Business context</h4>
+        <p>{{ detail.description || 'No description was provided.' }}</p>
+      </div>
+
+      <div class="gate-grid">
+        <article [class.gate--complete]="detail.hasQaEvidence">
+          <span>{{ detail.hasQaEvidence ? '✓' : '!' }}</span>
+          <div>
+            <strong>QA evidence</strong
+            ><small>{{ detail.hasQaEvidence ? 'Recorded' : 'Missing' }}</small>
+          </div>
+        </article>
+        <article [class.gate--complete]="detail.hasRollbackPlan">
+          <span>{{ detail.hasRollbackPlan ? '✓' : '!' }}</span>
+          <div>
+            <strong>Rollback plan</strong
+            ><small>{{ detail.hasRollbackPlan ? 'Recorded' : 'Missing' }}</small>
+          </div>
+        </article>
+      </div>
+
+      @if (detail.blockers.length > 0) {
+        <div class="blockers">
+          <strong>Gate findings</strong>
+          <ul>
+            @for (blocker of detail.blockers; track blocker) {
+              <li>{{ blocker }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (canRecordArtifacts(detail.status)) {
+        <form class="artifact-form" [formGroup]="artifactForm" (ngSubmit)="saveArtifacts()">
+          <h4>Release evidence</h4>
+          @if (detail.status === 'QaTesting') {
+            <label>
+              <span>QA evidence notes</span>
+              <textarea
+                formControlName="qaEvidenceNotes"
+                rows="3"
+                placeholder="Test run, result and evidence link"
+              ></textarea>
+            </label>
+          }
+          <label>
+            <span>Rollback plan</span>
+            <textarea
+              formControlName="rollbackPlan"
+              rows="3"
+              placeholder="Exact recovery steps"
+            ></textarea>
+          </label>
+          <label>
+            <span>Recorded by</span>
+            <input formControlName="actor" type="email" />
+          </label>
+          <button class="button button--dark" type="submit" [disabled]="isSaving()">
+            Save evidence
+          </button>
+        </form>
+      }
+
+      <div class="workflow-actions">
+        @if (primaryAction(detail); as action) {
+          <button
+            class="button button--primary"
+            type="button"
+            [disabled]="isSaving()"
+            (click)="applyAction(action.action)"
+          >
+            {{ action.label }}
+          </button>
+        }
+        @if (canReject(detail.status)) {
+          <button
+            class="button button--danger"
+            type="button"
+            [disabled]="isSaving()"
+            (click)="applyAction('Reject')"
+          >
+            Reject
+          </button>
+        }
+      </div>
+
+      <div class="audit">
+        <h4>Audit trail</h4>
+        @if (audit().length === 0) {
+          <p>No audit entries exist for this request yet.</p>
+        } @else {
+          <ol>
+            @for (entry of audit(); track entry.id) {
+              <li>
+                <span></span>
+                <div>
+                  <strong>{{ statusLabel(entry.action) }}</strong>
+                  <small>{{ entry.actor }} · {{ entry.occurredUtc | date: 'medium' }}</small>
+                  @if (entry.comment) {
+                    <p>{{ entry.comment }}</p>
+                  }
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+    </aside>
+    <button
+      class="detail-backdrop"
+      type="button"
+      (click)="closeDetails()"
+      aria-label="Close request details"
+    ></button>
+  }
+</section>

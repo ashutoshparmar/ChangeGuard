@@ -1,0 +1,66 @@
+name: changeguard-ci
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend build and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore ChangeGuard.slnx
+
+      - name: Build
+        run: dotnet build ChangeGuard.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test ChangeGuard.slnx --configuration Release --no-build --logger "trx;LogFileName=backend-tests.trx"
+
+      - name: Upload test result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: "**/TestResults/*.trx"
+          if-no-files-found: ignore
+
+  frontend:
+    name: React frontend build and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/ChangeGuard.React
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/ChangeGuard.React/package-lock.json
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Test
+        run: npm run test:ci
+
+      - name: Production build
+        run: npm run build

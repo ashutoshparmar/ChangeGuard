@@ -1,0 +1,86 @@
+<section class="release-panel"
+         aria-labelledby="release-readiness-title">
+  <header class="panel-heading">
+    <p class="eyebrow">MISSION CONTROL · RELEASE GATE</p>
+    <h2 id="release-readiness-title">
+      Prevent an unsafe release
+    </h2>
+  </header>
+
+  @if (viewState$ | async; as viewState) {
+  @if (viewState.isLoading) {
+  <p class="message" aria-live="polite">
+    Evaluating release readiness...
+  </p>
+  } @else if (viewState.errorMessage) {
+  <p class="message message--error" role="alert">
+    {{ viewState.errorMessage }}
+  </p>
+  } @else if (viewState.request; as request) {
+  <article class="request-card"
+           [class.request-card--blocked]="request.isBlocked">
+    <div class="request-heading">
+      <div>
+        <span class="reference">
+          {{ request.referenceNumber }}
+        </span>
+
+        <h3>{{ request.title }}</h3>
+      </div>
+
+      <div class="score"
+           [class.score--blocked]="request.isBlocked">
+        <strong>{{ request.score }}%</strong>
+        <span>ready</span>
+      </div>
+    </div>
+
+    <div class="metadata">
+      <p>
+        <span>Priority</span>
+        <strong>{{ request.priority }}</strong>
+      </p>
+
+      <p>
+        <span>Status</span>
+        <strong>
+          {{
+                request.status === 'QaTesting'
+                  ? 'QA Testing'
+                  : request.status
+          }}
+        </strong>
+      </p>
+    </div>
+
+    <p class="release-state"
+       [class.release-state--blocked]="request.isBlocked">
+      {{
+            request.isBlocked
+              ? 'RELEASE BLOCKED'
+              : 'READY FOR RELEASE APPROVAL'
+      }}
+    </p>
+
+    <div class="gate-findings">
+      <h4>Gate findings</h4>
+
+      @if (request.blockers.length > 0) {
+      <ul>
+        @for (
+        blocker of request.blockers;
+        track blocker
+        ) {
+        <li>{{ blocker }}</li>
+        }
+      </ul>
+      } @else {
+      <p class="all-clear">
+        All mandatory release checks passed.
+      </p>
+      }
+    </div>
+  </article>
+  }
+  }
+</section>

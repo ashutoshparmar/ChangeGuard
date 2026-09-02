@@ -1,0 +1,42 @@
+name: changeguard
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${SQL_SA_PASSWORD:?Create .env from .env.example first}
+    ports:
+      - "1433:1433"
+    volumes:
+      - changeguard-sql:/var/opt/mssql
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: src/ChangeGuard.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__ChangeGuardDatabase: Server=sqlserver,1433;Database=ChangeGuardDb;User Id=sa;Password=${SQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True
+      Database__ApplyMigrationsOnStartup: "true"
+      Cors__AllowedOrigins__0: http://localhost:8080
+    ports:
+      - "8081:8080"
+    depends_on:
+      - sqlserver
+    restart: on-failure
+
+  web:
+    build:
+      context: .
+      dockerfile: src/ChangeGuard.React/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  changeguard-sql:

@@ -1,0 +1,64 @@
+@ChangeGuard_Api_HostAddress = https://localhost:7110
+@ReferenceNumber = CG-501
+
+### Platform health
+GET {{ChangeGuard_Api_HostAddress}}/api/system/health
+Accept: application/json
+
+### Create a draft change request
+POST {{ChangeGuard_Api_HostAddress}}/api/change-requests
+Content-Type: application/json
+
+{
+  "referenceNumber": "{{ReferenceNumber}}",
+  "title": "Improve payment validation",
+  "description": "Prevent duplicate settlements and improve audit visibility.",
+  "priority": "Critical",
+  "actor": "product-owner@changeguard.local"
+}
+
+### Search requests
+GET {{ChangeGuard_Api_HostAddress}}/api/change-requests?page=1&pageSize=20
+Accept: application/json
+
+### Dashboard
+GET {{ChangeGuard_Api_HostAddress}}/api/change-requests/dashboard
+Accept: application/json
+
+### Request details
+GET {{ChangeGuard_Api_HostAddress}}/api/change-requests/{{ReferenceNumber}}
+Accept: application/json
+
+### Submit the draft for requirement review
+POST {{ChangeGuard_Api_HostAddress}}/api/change-requests/{{ReferenceNumber}}/workflow
+Content-Type: application/json
+
+{
+  "action": "SubmitForReview",
+  "actor": "product-owner@changeguard.local",
+  "comment": "Requirements and acceptance criteria are ready for review."
+}
+
+### Record release evidence (valid during development or QA)
+PUT {{ChangeGuard_Api_HostAddress}}/api/change-requests/{{ReferenceNumber}}/release-artifacts
+Content-Type: application/json
+
+{
+  "qaEvidenceNotes": null,
+  "rollbackPlan": "Redeploy the previous container image and restore the backup.",
+  "actor": "developer@changeguard.local"
+}
+
+### Release-readiness decision
+GET {{ChangeGuard_Api_HostAddress}}/api/change-requests/{{ReferenceNumber}}/release-readiness
+Accept: application/json
+
+### Audit trail
+GET {{ChangeGuard_Api_HostAddress}}/api/change-requests/{{ReferenceNumber}}/audit
+Accept: application/json
+
+### Container liveness
+GET {{ChangeGuard_Api_HostAddress}}/health/live
+
+### Database readiness
+GET {{ChangeGuard_Api_HostAddress}}/health/ready
